@@ -1,4 +1,4 @@
-# suwon-lawyer-theme (Della Theme)
+# Della Theme (수원성범죄전문변호사.kr)
 
 ## 구조
 

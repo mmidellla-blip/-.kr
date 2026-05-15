@@ -238,7 +238,7 @@ function della_theme_consultation_url() {
 	if ( is_string( $url ) && trim( $url ) !== '' ) {
 		return trim( $url );
 	}
-	return 'https://sexcrimecenter-dongju.com/bbs/board.php?bo_table=online&me_code=6010';
+	return 'https://수원성범죄전문변호사.kr/';
 }
 
 /** 상호(법인명) — 전 구역 통일용. */
@@ -1655,7 +1655,7 @@ function della_theme_customize_register( $wp_customize ) {
 	) );
 	$wp_customize->add_control( 'della_hero_home_url', array(
 		'label'       => __( '홈페이지 바로가기 URL', 'della-theme' ),
-		'description' => __( '예: https://sexcrimecenter-dongju.com/', 'della-theme' ),
+		'description' => __( '예: https://수원성범죄전문변호사.kr/', 'della-theme' ),
 		'section'     => 'della_hero_section',
 		'type'        => 'url',
 	) );

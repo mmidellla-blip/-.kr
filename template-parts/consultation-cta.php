@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$consultation_url = function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : 'https://sexcrimecenter-dongju.com/bbs/board.php?bo_table=online&me_code=6010';
+$consultation_url = function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : 'https://수원성범죄전문변호사.kr/';
 
 $consultation_bg = content_url( 'uploads/2026/02/consultation-bg.webp' );
 ?>
