@@ -7,8 +7,10 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -29,14 +31,21 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
+
+          protocol: ftps
+          port: 21
+
           local-dir: ./
-          server-dir: /public_html/wp-content/themes/della-theme/
+          server-dir: public_html/wp-content/themes/della-theme/
+
           exclude: |
             **/node_modules/**
             **/.git/**
+            **/.github/**
             **/assets/css/src/**
             **/build-css.php
             **/split-css.php
             **/purgecss.config.cjs
             **/package.json
             **/package-lock.json
+            **/README.md
