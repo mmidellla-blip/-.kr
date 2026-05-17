@@ -205,6 +205,171 @@ function della_theme_preserve_request_host_redirect_canonical( $redirect_url, $r
 add_filter( 'redirect_canonical', 'della_theme_preserve_request_host_redirect_canonical', 10, 2 );
 
 /**
+ * 프론트엔드 탐색 시 현재 HTTP_HOST 기준으로 permalink/home_url 변환할지 여부.
+ * (canonical·og:url 은 della_theme_get_canonical_url() — 변환 제외)
+ *
+ * @return bool
+ */
+function della_theme_should_preserve_current_host() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( wp_doing_cron() ) {
+		return false;
+	}
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		return false;
+	}
+	$host = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+	if ( $host === '' ) {
+		return false;
+	}
+	return (bool) apply_filters( 'della_theme_should_preserve_current_host', true );
+}
+
+/**
+ * 현재 요청의 scheme + host (예: https://suwon-lawyer.com).
+ *
+ * @return string
+ */
+function della_theme_current_origin() {
+	$scheme = is_ssl() ? 'https://' : 'http://';
+	$host   = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+	if ( $host === '' ) {
+		return '';
+	}
+	return $scheme . $host;
+}
+
+/**
+ * 사이트에 등록된 내부 호스트 목록 (옵션·canonical — home_url 필터 미사용, 재귀 방지).
+ *
+ * @return string[]
+ */
+function della_theme_get_internal_site_hosts() {
+	static $hosts = null;
+	if ( $hosts !== null ) {
+		return $hosts;
+	}
+	$hosts      = array();
+	$candidates = array(
+		get_option( 'home' ),
+		get_option( 'siteurl' ),
+		DELLA_CANONICAL_BASE_URL,
+	);
+	foreach ( $candidates as $url ) {
+		if ( ! is_string( $url ) || $url === '' ) {
+			continue;
+		}
+		$h = wp_parse_url( $url, PHP_URL_HOST );
+		if ( is_string( $h ) && $h !== '' ) {
+			$hosts[] = strtolower( $h );
+		}
+	}
+	$hosts = array_values( array_unique( $hosts ) );
+	return $hosts;
+}
+
+/**
+ * URL 이 이 WordPress 사이트 내부 링크인지 (외부·메일·tel 등은 false).
+ *
+ * @param string $url URL.
+ * @return bool
+ */
+function della_theme_is_internal_site_url( $url ) {
+	if ( ! is_string( $url ) || $url === '' ) {
+		return false;
+	}
+	if ( strpos( $url, '#' ) === 0 ) {
+		return false;
+	}
+	if ( preg_match( '#^(mailto:|tel:|javascript:)#i', $url ) ) {
+		return false;
+	}
+	// 상대 경로는 내부로 간주.
+	if ( strpos( $url, '//' ) === false && isset( $url[0] ) && $url[0] === '/' ) {
+		return true;
+	}
+	$host = wp_parse_url( $url, PHP_URL_HOST );
+	if ( ! is_string( $host ) || $host === '' ) {
+		return false;
+	}
+	return in_array( strtolower( $host ), della_theme_get_internal_site_hosts(), true );
+}
+
+/**
+ * permalink/home_url 등을 현재 접속 호스트 기준으로 변환 (canonical 은 별도 유지).
+ *
+ * @param string $url 원본 URL.
+ * @return string
+ */
+function della_theme_preserve_current_host_url( $url ) {
+	if ( empty( $url ) || ! is_string( $url ) ) {
+		return $url;
+	}
+	if ( ! della_theme_should_preserve_current_host() ) {
+		return $url;
+	}
+	if ( ! della_theme_is_internal_site_url( $url ) ) {
+		return $url;
+	}
+
+	$current_origin = della_theme_current_origin();
+	if ( $current_origin === '' ) {
+		return $url;
+	}
+
+	$parts = wp_parse_url( $url );
+	if ( ! is_array( $parts ) ) {
+		return $url;
+	}
+
+	if ( empty( $parts['path'] ) ) {
+		return $current_origin . '/';
+	}
+
+	$path = $parts['path'];
+
+	if ( ! empty( $parts['query'] ) ) {
+		$path .= '?' . $parts['query'];
+	}
+
+	if ( ! empty( $parts['fragment'] ) ) {
+		$path .= '#' . $parts['fragment'];
+	}
+
+	return rtrim( $current_origin, '/' ) . $path;
+}
+
+/**
+ * @param string $url 필터된 URL.
+ * @return string
+ */
+function della_theme_filter_preserve_current_host_url( $url ) {
+	return della_theme_preserve_current_host_url( $url );
+}
+
+/**
+ * post/page/term/home_url 등 내부 링크를 현재 호스트로 통일.
+ */
+function della_theme_register_current_host_url_filters() {
+	$link_filters = array(
+		'post_link',
+		'page_link',
+		'post_type_link',
+		'term_link',
+		'tag_link',
+		'category_link',
+		'home_url',
+		'site_url',
+	);
+	foreach ( $link_filters as $filter_name ) {
+		add_filter( $filter_name, 'della_theme_filter_preserve_current_host_url', 999 );
+	}
+}
+add_action( 'init', 'della_theme_register_current_host_url_filters', 20 );
+
+/**
  * 현재 메인 쿼리의 WP_Post (없으면 null).
  *
  * @return WP_Post|null
