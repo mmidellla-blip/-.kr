@@ -88,8 +88,9 @@ if ( $cat ) {
 					);
 					?>
 					<article class="success-story-card" itemscope itemtype="https://schema.org/Article">
-						<link itemprop="url" href="<?php echo esc_url( get_permalink() ); ?>">
-						<a href="<?php echo esc_url( get_permalink() ); ?>" class="success-story-link" title="<?php echo esc_attr( $card_title ); ?>">
+						<?php $story_permalink = function_exists( 'della_theme_esc_internal_url' ) ? della_theme_esc_internal_url( get_permalink() ) : esc_url( get_permalink() ); ?>
+						<link itemprop="url" href="<?php echo $story_permalink; ?>">
+						<a href="<?php echo $story_permalink; ?>" class="success-story-link" title="<?php echo esc_attr( $card_title ); ?>">
 							<div class="success-story-doc">
 								<?php if ( $thumb ) : ?>
 									<img src="<?php echo esc_url( $thumb ); ?>" alt="<?php echo esc_attr( $img_alt ); ?>" class="success-story-doc-img" loading="lazy" width="280" height="360" itemprop="image">

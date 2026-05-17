@@ -37,6 +37,9 @@ foreach ( $lawyers as $lawyer ) {
 }
 
 $hero_home_url   = apply_filters( 'della_hero_home_url', get_theme_mod( 'della_hero_home_url', home_url( '/' ) ) );
+if ( function_exists( 'della_theme_internal_url' ) ) {
+	$hero_home_url = della_theme_internal_url( $hero_home_url );
+}
 $hero_url_cases  = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : home_url( '/성범죄-성공사례/' );
 $hero_url_info   = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/성범죄-대응정보/' );
 $hero_phone      = get_theme_mod( 'della_phone', '1522-3394' );

@@ -125,11 +125,11 @@ if ( $query && $query->have_posts() ) {
 							}
 						}
 					}
-					$card_url = get_permalink();
+					$card_url = function_exists( 'della_theme_esc_internal_url' ) ? della_theme_esc_internal_url( get_permalink() ) : esc_url( get_permalink() );
 					?>
 					<li class="response-info-card" role="listitem">
 						<article class="response-info-card-article">
-							<a href="<?php echo esc_url( $card_url ); ?>" class="response-info-card-link" aria-label="<?php echo esc_attr( $card_title . ' 보기' ); ?>">
+							<a href="<?php echo $card_url; ?>" class="response-info-card-link" aria-label="<?php echo esc_attr( $card_title . ' 보기' ); ?>">
 								<span class="response-info-card-tag" aria-hidden="true"><?php echo esc_html( $tag_label ); ?></span>
 								<h3 class="response-info-card-title"><?php echo esc_html( $card_title ); ?></h3>
 								<?php if ( has_excerpt() ) : ?>

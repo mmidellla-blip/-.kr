@@ -37,7 +37,7 @@ if ( empty( $filter_cat ) && isset( $_GET['tag'] ) ) {
 
 /* 검색어 없이 검색 버튼 눌렀을 때: 전체 결과 페이지로 이동 (q 제거) */
 if ( isset( $_GET['q'] ) && $search === '' ) {
-	$redirect_url = get_permalink();
+	$redirect_url = function_exists( 'della_theme_internal_url' ) ? della_theme_internal_url( get_permalink() ) : get_permalink();
 	if ( $filter_cat ) {
 		$redirect_url = add_query_arg( 'cat', $filter_cat, $redirect_url );
 	}
@@ -101,7 +101,7 @@ if ( ! $success_cat_id ) {
 }
 
 $board_query = new WP_Query( $query_args );
-$base_url    = get_permalink();
+$base_url    = function_exists( 'della_theme_internal_url' ) ? della_theme_internal_url( get_permalink() ) : get_permalink();
 // 잘못된 페이지 번호(paged) 시 404 처리
 if ( $paged > 1 && $board_query->max_num_pages > 0 && $paged > $board_query->max_num_pages ) {
 	della_theme_trigger_404();

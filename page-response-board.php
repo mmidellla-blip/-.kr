@@ -215,7 +215,7 @@ if ( $filter_cat ) {
 }
 
 $board_query = new WP_Query( $query_args );
-$base_url    = get_permalink();
+$base_url    = function_exists( 'della_theme_internal_url' ) ? della_theme_internal_url( get_permalink() ) : get_permalink();
 // 잘못된 페이지 번호(paged) 시 404 처리
 if ( $paged > 1 && $board_query->max_num_pages > 0 && $paged > $board_query->max_num_pages ) {
 	della_theme_trigger_404();
