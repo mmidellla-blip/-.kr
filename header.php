@@ -18,14 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<meta name="format-detection" content="telephone=yes">
 	<link rel="profile" href="https://gmpg.org/xfn/11">
 	<?php
-	if ( function_exists( 'della_theme_should_run_seo' ) && della_theme_should_run_seo() ) {
-		if ( ! is_front_page() ) {
-			echo '<meta name="robots" content="' . esc_attr( function_exists( 'della_theme_robots_content' ) ? della_theme_robots_content() : 'index,follow,max-image-preview:large' ) . '" />' . "\n";
-		}
-		$canonical_url = function_exists( 'della_theme_get_canonical_url' ) ? della_theme_get_canonical_url() : '';
-		if ( $canonical_url ) {
-			echo '<link rel="canonical" href="' . esc_url( $canonical_url ) . '">' . "\n";
-		}
+	if ( function_exists( 'della_theme_should_run_seo' ) && della_theme_should_run_seo() && ! is_front_page() ) {
+		echo '<meta name="robots" content="' . esc_attr( function_exists( 'della_theme_robots_content' ) ? della_theme_robots_content() : 'index,follow,max-image-preview:large' ) . '" />' . "\n";
 	}
 	// LCP: 히어로 이미지 preload (상대경로로 출력 — 도메인 변경 시에도 동작)
 	if ( is_front_page() ) {
@@ -43,6 +37,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	?>
 	<?php wp_head(); ?>
 	<?php
+	// Canonical: wp_head(플러그인) 이후 단 1회만 출력 — DELLA_CANONICAL_BASE_URL + REQUEST_URI 경로.
+	if ( function_exists( 'della_theme_should_run_seo' ) && della_theme_should_run_seo() && function_exists( 'della_theme_get_canonical_url' ) ) {
+		$canonical_url = della_theme_get_canonical_url();
+		if ( $canonical_url ) {
+			echo '<link rel="canonical" href="' . esc_url( $canonical_url ) . '">' . "\n";
+		}
+	}
 	// AIOSEO/테마 메타에 description이 없을 때를 대비해 테마에서 1회 출력 (홈은 홈 전용 메타에서 처리하므로 제외)
 	if ( ! is_front_page() && ( ! function_exists( 'della_theme_should_run_seo' ) || della_theme_should_run_seo() ) && function_exists( 'della_theme_get_fallback_description' ) ) {
 		$della_desc = della_theme_get_fallback_description();

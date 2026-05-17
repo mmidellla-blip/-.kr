@@ -43,12 +43,138 @@ function della_theme_should_run_seo() {
 }
 
 /**
- * WordPress 기본 rel=canonical 제거 (테마 canonical 1곳만 출력).
+ * WordPress 기본 rel=canonical 제거 (테마 header.php 단 1곳만 출력).
  */
 function della_theme_disable_wp_rel_canonical() {
 	remove_action( 'wp_head', 'rel_canonical' );
 }
 add_action( 'init', 'della_theme_disable_wp_rel_canonical', 20 );
+add_action( 'wp', 'della_theme_disable_wp_rel_canonical', 0 );
+add_action( 'template_redirect', 'della_theme_disable_wp_rel_canonical', 0 );
+
+/**
+ * SEO 플러그인의 <link rel="canonical"> 중복 출력 제거 (URL 필터는 별도 등록).
+ */
+function della_theme_disable_duplicate_canonical_link_tags() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
+	remove_action( 'wp_head', 'rel_canonical' );
+	if ( class_exists( 'WPSEO_Frontend', false ) ) {
+		$yoast = WPSEO_Frontend::get_instance();
+		if ( $yoast instanceof WPSEO_Frontend ) {
+			remove_action( 'wpseo_head', array( $yoast, 'canonical' ), 20 );
+		}
+	}
+}
+add_action( 'wp', 'della_theme_disable_duplicate_canonical_link_tags', 0 );
+add_action( 'template_redirect', 'della_theme_disable_duplicate_canonical_link_tags', 0 );
+
+/**
+ * AIOSEO / Yoast / Rank Math canonical URL 필터 + AIOSEO link 태그 비활성화 (init 시 등록).
+ */
+function della_theme_register_canonical_integrations() {
+	add_filter( 'aioseo_disable_canonical_url', 'della_theme_filter_aioseo_disable_canonical_url', 999 );
+
+	add_filter(
+		'aioseo_canonical_url',
+		static function ( $url ) {
+			if ( ! della_theme_should_run_seo() ) {
+				return $url;
+			}
+			$canonical = della_theme_get_canonical_url();
+			return $canonical ? $canonical : $url;
+		},
+		999
+	);
+
+	add_filter(
+		'wpseo_canonical',
+		static function ( $url ) {
+			if ( ! della_theme_should_run_seo() ) {
+				return $url;
+			}
+			$canonical = della_theme_get_canonical_url();
+			return $canonical ? $canonical : $url;
+		},
+		999
+	);
+
+	add_filter(
+		'rank_math/frontend/canonical',
+		static function ( $url ) {
+			if ( ! della_theme_should_run_seo() ) {
+				return $url;
+			}
+			$canonical = della_theme_get_canonical_url();
+			return $canonical ? $canonical : $url;
+		},
+		999
+	);
+
+	add_filter( 'aioseo_facebook_tags', 'della_theme_filter_aioseo_social_url', 999, 1 );
+	add_filter( 'aioseo_twitter_tags', 'della_theme_filter_aioseo_social_url', 999, 1 );
+	add_filter( 'aioseo_links', 'della_theme_filter_aioseo_remove_canonical_link', 999, 1 );
+
+	add_filter( 'wpseo_opengraph_url', 'della_theme_filter_wpseo_opengraph_url', 999, 1 );
+}
+add_action( 'init', 'della_theme_register_canonical_integrations', 5 );
+
+/**
+ * AIOSEO links 배열에서 canonical 항목 제거 (link 태그 이중 출력 방지).
+ *
+ * @param array<string, mixed> $links AIOSEO head links.
+ * @return array<string, mixed>
+ */
+function della_theme_filter_aioseo_remove_canonical_link( $links ) {
+	if ( ! della_theme_should_run_seo() || ! is_array( $links ) ) {
+		return $links;
+	}
+	unset( $links['canonical'] );
+	return $links;
+}
+
+/**
+ * @param bool $disabled AIOSEO canonical link 비활성 여부.
+ * @return bool
+ */
+function della_theme_filter_aioseo_disable_canonical_url( $disabled ) {
+	if ( della_theme_should_run_seo() ) {
+		return true;
+	}
+	return $disabled;
+}
+
+/**
+ * AIOSEO Facebook/Twitter og:url 을 canonical 기준 도메인으로.
+ *
+ * @param array<string, string> $tags 소셜 메타 태그.
+ * @return array<string, string>
+ */
+function della_theme_filter_aioseo_social_url( $tags ) {
+	if ( ! della_theme_should_run_seo() || ! is_array( $tags ) ) {
+		return $tags;
+	}
+	$canonical = della_theme_get_canonical_url();
+	if ( $canonical ) {
+		$tags['og:url'] = $canonical;
+	}
+	return $tags;
+}
+
+/**
+ * Yoast og:url 을 canonical 기준 도메인으로.
+ *
+ * @param string $url Open Graph URL.
+ * @return string
+ */
+function della_theme_filter_wpseo_opengraph_url( $url ) {
+	if ( ! della_theme_should_run_seo() ) {
+		return $url;
+	}
+	$canonical = della_theme_get_canonical_url();
+	return $canonical ? $canonical : $url;
+}
 
 /**
  * redirect_canonical 이 접속 중인 호스트와 다른 도메인으로 보내지 않도록 차단.
@@ -2922,21 +3048,6 @@ function della_theme_get_canonical_url() {
 
 	return esc_url( $canonical );
 }
-
-/**
- * AIOSEO canonical 을 테마 기준 URL 로 통일 (중복·구 도메인 방지).
- *
- * @param string $url AIOSEO canonical.
- * @return string
- */
-function della_theme_aioseo_canonical_url( $url ) {
-	if ( ! della_theme_should_run_seo() ) {
-		return $url;
-	}
-	$canonical = della_theme_get_canonical_url();
-	return $canonical ? $canonical : $url;
-}
-add_filter( 'aioseo_canonical_url', 'della_theme_aioseo_canonical_url', 20, 1 );
 
 /**
  * SEO: 성범죄 전문 변호사(목록) 페이지 메타 — AIOSEO에서 관리하므로 테마에서는 출력하지 않음.
