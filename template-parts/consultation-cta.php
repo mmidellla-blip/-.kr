@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$consultation_url = function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : 'https://수원성범죄전문변호사.kr/';
+$consultation_url = function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : home_url( '/' );
 
 $consultation_bg = content_url( 'uploads/2026/02/consultation-bg.webp' );
 ?>

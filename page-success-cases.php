@@ -293,7 +293,7 @@ get_header();
 					<div class="internal-links-actions">
 						<a href="<?php echo esc_url( function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : home_url( '/info/' ) ); ?>">성범죄 유형별 대응 가이드</a>
 						<a href="<?php echo esc_url( function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : home_url( '/lawyer/' ) ); ?>">대응 변호사 팀 소개</a>
-						<a href="<?php echo esc_url( function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : 'https://수원성범죄전문변호사.kr/' ); ?>">법률 상담 예약</a>
+						<a href="<?php echo esc_url( function_exists( 'della_theme_consultation_url' ) ? della_theme_consultation_url() : home_url( '/' ) ); ?>">법률 상담 예약</a>
 					</div>
 				</div>
 			</section>

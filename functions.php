@@ -13,6 +13,51 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'DELLA_THEME_VERSION', '1.0.1' );
 
 /**
+ * 프론트엔드 공개 요청에서만 SEO·canonical·URL 커스텀 로직 실행.
+ * wp-admin / AJAX / REST / cron 에서는 false.
+ *
+ * @return bool
+ */
+function della_theme_should_run_seo() {
+	if ( is_admin() ) {
+		return false;
+	}
+	if ( wp_doing_ajax() ) {
+		return false;
+	}
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		return false;
+	}
+	if ( wp_doing_cron() ) {
+		return false;
+	}
+	return (bool) apply_filters( 'della_theme_should_run_seo', true );
+}
+
+/**
+ * 현재 메인 쿼리의 WP_Post (없으면 null).
+ *
+ * @return WP_Post|null
+ */
+function della_theme_get_queried_post() {
+	if ( ! della_theme_should_run_seo() || is_404() ) {
+		return null;
+	}
+	$post = get_queried_object();
+	return ( $post instanceof WP_Post ) ? $post : null;
+}
+
+/**
+ * 현재 singular 페이지 permalink (global $post 미사용).
+ *
+ * @return string
+ */
+function della_theme_get_queried_post_permalink() {
+	$post = della_theme_get_queried_post();
+	return $post ? (string) get_permalink( $post ) : '';
+}
+
+/**
  * CSS/JS 캐시 무효화용 공통 버전 (한 번에 전체 갱신)
  * dist/common.min.css, dist/critical.min.css 중
  * 가장 최근 수정 시각을 사용. 배포·빌드 시 쿼리스트링이 바뀌어 캐시 미사용.
@@ -154,6 +199,9 @@ add_action( 'after_switch_theme', 'della_theme_flush_rewrite_on_switch', 99 );
  * 한글 URL(/성범죄-전문-변호사/) 접속 시 실제 페이지(/lawyers/)로 리다이렉트 (404 방지)
  */
 function della_theme_redirect_lawyers_korean_url() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
 	if ( ! is_404() ) {
 		return;
 	}
@@ -238,7 +286,7 @@ function della_theme_consultation_url() {
 	if ( is_string( $url ) && trim( $url ) !== '' ) {
 		return trim( $url );
 	}
-	return 'https://수원성범죄전문변호사.kr/';
+	return home_url( '/' );
 }
 
 /** 상호(법인명) — 전 구역 통일용. */
@@ -250,6 +298,9 @@ function della_theme_firm_name() {
  * 한글 URL(/성범죄-대응정보/) 접속 시 게시판 페이지로 리다이렉트
  */
 function della_theme_redirect_response_board_korean_url() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 	$path        = trim( parse_url( $request_uri, PHP_URL_PATH ), '/' );
 	$korean_slug = rawurldecode( $path );
@@ -329,6 +380,9 @@ function della_theme_success_cases_page_url() {
  * 한글 URL(/성범죄-성공사례/) 접속 시 성공사례 페이지로 리다이렉트
  */
 function della_theme_redirect_success_cases_korean_url() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 	$path        = trim( parse_url( $request_uri, PHP_URL_PATH ), '/' );
 	$korean_slug = rawurldecode( $path );
@@ -470,6 +524,9 @@ add_action( 'init', 'della_theme_ensure_privacy_policy_page', 0 );
  * body 클래스: 프론트(맨 위)에서 헤더 투명 적용용 / 변호사 페이지
  */
 function della_theme_body_class_header( $classes ) {
+	if ( ! della_theme_should_run_seo() ) {
+		return $classes;
+	}
 	if ( is_front_page() ) {
 		$classes[] = 'della-is-front';
 	}
@@ -496,6 +553,9 @@ add_filter( 'body_class', 'della_theme_body_class_header' );
  * @return bool
  */
 function della_theme_is_lawyers_page() {
+	if ( ! della_theme_should_run_seo() ) {
+		return false;
+	}
 	return is_singular( 'page' ) && get_page_template_slug() === 'page-lawyers.php';
 }
 
@@ -503,6 +563,9 @@ function della_theme_is_lawyers_page() {
  * 성범죄 대응정보 페이지 여부 (SEO·메타 전용)
  */
 function della_theme_is_response_board_page() {
+	if ( ! della_theme_should_run_seo() ) {
+		return false;
+	}
 	return is_singular( 'page' ) && get_page_template_slug() === 'page-response-board.php';
 }
 
@@ -511,6 +574,9 @@ function della_theme_is_response_board_page() {
  * 템플릿·슬러그·URL 비교로 판별 (wp_head에서도 동작).
  */
 function della_theme_is_success_cases_page() {
+	if ( ! della_theme_should_run_seo() ) {
+		return false;
+	}
 	if ( ! is_singular( 'page' ) ) {
 		return false;
 	}
@@ -1065,6 +1131,9 @@ function della_theme_ensure_description_length( $description, $law_firm_name = '
  * 메인은 100점 메타 세트와 동일한 title 사용 (중복 방지).
  */
 function della_theme_document_title_parts( $parts ) {
+	if ( ! della_theme_should_run_seo() ) {
+		return $parts;
+	}
 	$site = get_bloginfo( 'name' );
 	if ( is_404() ) {
 		$parts['title'] = della_theme_trim_document_title( __( '페이지를 찾을 수 없습니다', 'della-theme' ) . ' | ' . $site );
@@ -1128,6 +1197,9 @@ add_filter( 'document_title_parts', 'della_theme_document_title_parts', 10, 1 );
  * SEO: 프론트 페이지에서 AIOSEO head 출력 비활성화 (테마에서 메타 직접 출력).
  */
 function della_theme_disable_aioseo_on_front_page( $disabled ) {
+	if ( ! della_theme_should_run_seo() ) {
+		return $disabled;
+	}
 	if ( is_front_page() ) {
 		return true;
 	}
@@ -1139,6 +1211,9 @@ add_filter( 'aioseo_disable', 'della_theme_disable_aioseo_on_front_page', 1 );
  * SEO: 프론트 페이지 전용 title 태그 제거 (홈 전용 메타 블록에서 출력).
  */
 function della_theme_remove_title_tag_on_front_page() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
 	if ( is_front_page() ) {
 		remove_action( 'wp_head', 'wp_render_title_tag', 1 );
 	}
@@ -1149,6 +1224,9 @@ add_action( 'wp', 'della_theme_remove_title_tag_on_front_page', 1 );
  * SEO: 홈페이지에서 rel="next"/rel="prev" 링크 제거 (블로그 아카이브로 오인 방지).
  */
 function della_theme_remove_adjacent_posts_rel_links_on_front_page() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
 	if ( is_front_page() ) {
 		remove_action( 'wp_head', 'adjacent_posts_rel_link_wp_head', 10, 0 );
 	}
@@ -1238,7 +1316,7 @@ function della_theme_format_telephone_for_schema( $phone ) {
  * 이미지는 della_theme_get_home_og_image_url() 사용 (실제 경로).
  */
 function della_theme_homepage_seo_meta() {
-	if ( ! is_front_page() ) {
+	if ( ! della_theme_should_run_seo() || ! is_front_page() ) {
 		return;
 	}
 	$base_url = home_url( '/' );
@@ -1294,7 +1372,7 @@ add_action( 'wp_head', 'della_theme_homepage_seo_meta', 0 );
  * SEO 플러그인 사용 시 중복되면 add_filter( 'della_theme_output_non_home_og_twitter', '__return_false' ); 로 비활성화.
  */
 function della_theme_output_non_home_og_twitter_meta() {
-	if ( is_front_page() ) {
+	if ( ! della_theme_should_run_seo() || is_front_page() ) {
 		return;
 	}
 	if ( ! apply_filters( 'della_theme_output_non_home_og_twitter', true ) ) {
@@ -1323,7 +1401,7 @@ function della_theme_output_non_home_og_twitter_meta() {
 	$url = function_exists( 'della_theme_get_canonical_url' ) ? della_theme_get_canonical_url() : '';
 	if ( empty( $url ) ) {
 		if ( is_singular() ) {
-			$url = get_permalink();
+			$url = della_theme_get_queried_post_permalink();
 		} elseif ( is_category() ) {
 			$term = get_queried_object();
 			$url  = $term && ( $term instanceof WP_Term ) ? get_category_link( $term ) : home_url( '/' );
@@ -1398,7 +1476,7 @@ function della_theme_schema_same_as_urls() {
  * 주소·좌표·운영시간·지도 URL은 커스터마이저/필터로 적용.
  */
 function della_theme_front_page_meta_100() {
-	if ( ! is_front_page() ) {
+	if ( ! della_theme_should_run_seo() || ! is_front_page() ) {
 		return;
 	}
 	$base_url  = home_url( '/' );
@@ -1549,7 +1627,7 @@ function della_theme_get_hub_faq_items() {
  * FAQPage JSON-LD — 홈에서만 head에 출력
  */
 function della_theme_output_faqpage_schema() {
-	if ( ! is_front_page() ) {
+	if ( ! della_theme_should_run_seo() || ! is_front_page() ) {
 		return;
 	}
 	$faq_items = della_theme_get_hub_faq_items();
@@ -1580,6 +1658,9 @@ add_action( 'wp_head', 'della_theme_output_faqpage_schema', 2 );
  * Google Analytics 4 (GA4) — head에 gtag 스크립트 출력 (복수 측정 ID 지원)
  */
 function della_theme_ga4_script() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
 	$ga_ids = apply_filters( 'della_theme_ga4_measurement_ids', array( 'G-C817947ECG', 'G-9Z7QP4ZBZ9' ) );
 	if ( ! is_array( $ga_ids ) ) {
 		$ga_ids = array_filter( array( $ga_ids ) );
@@ -2756,6 +2837,9 @@ add_action( 'wp_footer', 'della_theme_directions_copy_script', 22 );
  * 404 시 404 명시 및 검색로봇 캐시 방지
  */
 function della_theme_seo_http_status() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
 	if ( is_404() ) {
 		status_header( 404 );
 		nocache_headers();
@@ -2790,7 +2874,7 @@ function della_theme_trigger_404() {
  * 404는 빈 문자열 반환.
  */
 function della_theme_get_canonical_url() {
-	if ( is_404() ) {
+	if ( ! della_theme_should_run_seo() || is_404() ) {
 		return '';
 	}
 	if ( is_front_page() || ( is_home() && get_option( 'show_on_front' ) === 'posts' ) ) {
@@ -2799,17 +2883,17 @@ function della_theme_get_canonical_url() {
 		if ( get_query_var( 'lawyer_slug' ) ) {
 			$canonical = function_exists( 'della_theme_lawyer_profile_url' ) ? della_theme_lawyer_profile_url( get_query_var( 'lawyer_slug' ) ) : '';
 		} else {
-			$canonical = function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : get_permalink();
+			$canonical = function_exists( 'della_theme_lawyers_page_url' ) ? della_theme_lawyers_page_url() : della_theme_get_queried_post_permalink();
 		}
 	} elseif ( function_exists( 'della_theme_is_success_cases_page' ) && della_theme_is_success_cases_page() ) {
-		$canonical = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
+		$canonical = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : della_theme_get_queried_post_permalink();
 		$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 		$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
 		if ( $tag || $cat ) {
 			$canonical = add_query_arg( array_filter( array( 'tag' => $tag ? $tag : null, 'cat' => $cat ? $cat : null ) ), $canonical );
 		}
 	} elseif ( function_exists( 'della_theme_is_response_board_page' ) && della_theme_is_response_board_page() ) {
-		$canonical = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : get_permalink();
+		$canonical = function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : della_theme_get_queried_post_permalink();
 		$tag = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 		$cat = isset( $_GET['cat'] ) ? sanitize_text_field( wp_unslash( $_GET['cat'] ) ) : '';
 		if ( $tag || $cat ) {
@@ -2819,7 +2903,7 @@ function della_theme_get_canonical_url() {
 		$canonical = function_exists( 'wp_get_canonical_url' ) ? wp_get_canonical_url() : null;
 		if ( empty( $canonical ) ) {
 			if ( is_singular() ) {
-				$canonical = get_permalink();
+				$canonical = della_theme_get_queried_post_permalink();
 			} elseif ( is_archive() || is_search() ) {
 				$canonical = get_pagenum_link( 1, false );
 			}
@@ -2852,6 +2936,9 @@ function della_theme_lawyer_profile_page_meta() {
  * @return string 비면 출력하지 않음.
  */
 function della_theme_get_fallback_description() {
+	if ( ! della_theme_should_run_seo() ) {
+		return '';
+	}
 	$law = __( '법무법인 동주', 'della-theme' );
 
 	if ( is_404() ) {
@@ -3161,7 +3248,7 @@ function della_theme_og_twitter_meta() {
 	$law_firm_name = della_theme_firm_name();
 	$title         = wp_get_document_title();
 	$description   = '';
-	$url           = is_singular() ? get_permalink() : home_url( '/' );
+	$url           = is_singular() ? della_theme_get_queried_post_permalink() : home_url( '/' );
 	if ( ! $url || ! is_string( $url ) ) {
 		$url = home_url( '/' );
 	}
@@ -3268,6 +3355,9 @@ function della_theme_og_twitter_meta() {
  * Schema.org JSON-LD structured data
  */
 function della_theme_schema_json_ld() {
+	if ( ! della_theme_should_run_seo() ) {
+		return;
+	}
 	$schema           = array();
 	$schema_breadcrumb = array();
 
@@ -3433,7 +3523,7 @@ function della_theme_schema_json_ld() {
 			'@type'           => 'ItemList',
 			'name'            => __( '성범죄 대응정보 목록', 'della-theme' ),
 			'description'     => __( '성범죄 대응정보 게시판 글 목록. 법조문, 판례, FAQ, 수사·재판 대응 가이드.', 'della-theme' ),
-			'url'             => get_permalink(),
+			'url'             => function_exists( 'della_theme_response_board_page_url' ) ? della_theme_response_board_page_url() : della_theme_get_queried_post_permalink(),
 			'numberOfItems'   => count( $rb_items ),
 			'itemListElement' => $rb_items,
 		);
@@ -3443,7 +3533,7 @@ function della_theme_schema_json_ld() {
 	// 성범죄 성공사례 페이지: @graph (WebSite, LegalService, WebPage, BreadcrumbList, ItemList)
 	if ( della_theme_is_success_cases_page() ) {
 		$base_url    = home_url( '/' );
-		$sc_page_url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : get_permalink();
+		$sc_page_url = function_exists( 'della_theme_success_cases_page_url' ) ? della_theme_success_cases_page_url() : della_theme_get_queried_post_permalink();
 		$road        = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
 		$road2       = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
 		$street      = trim( $road . ' ' . $road2 );
@@ -3668,6 +3758,10 @@ add_action( 'wp_head', 'della_theme_schema_json_ld', 3 );
 function della_theme_get_breadcrumb_items() {
 	$items = array();
 
+	if ( ! della_theme_should_run_seo() ) {
+		return $items;
+	}
+
 	$items[] = array( 'label' => __( 'Home', 'della-theme' ), 'url' => home_url( '/' ) );
 
 	if ( is_front_page() ) {
@@ -3746,10 +3840,13 @@ function della_theme_content_image_attachment_id( $img_tag ) {
  * 글쓰기/업데이트 시 미디어 라이브러리 alt·title이 노출되도록 함.
  */
 function della_theme_content_images_alt_title( $content ) {
-	if ( ! is_string( $content ) || $content === '' || ! is_singular() ) {
+	if ( ! della_theme_should_run_seo() || ! is_string( $content ) || $content === '' || ! is_singular() ) {
 		return $content;
 	}
-	$post = get_post();
+	$post = della_theme_get_queried_post();
+	if ( ! $post ) {
+		$post = get_post();
+	}
 	if ( ! $post instanceof WP_Post ) {
 		return $content;
 	}

@@ -21,7 +21,7 @@ $hero_cta_tel   = 'tel:' . preg_replace( '/[^0-9+]/', '', $hero_cta_phone );
 			<span class="hero-cta-tel"><?php echo esc_html( $hero_cta_phone ); ?></span>
 		</a>
 		<?php
-		$hero_home_url = get_theme_mod( 'della_hero_home_url', 'https://수원성범죄전문변호사.kr/' );
+		$hero_home_url = get_theme_mod( 'della_hero_home_url', home_url( '/' ) );
 		$hero_home_url = apply_filters( 'della_hero_home_url', $hero_home_url );
 		?>
 		<a href="<?php echo esc_url( $hero_home_url ); ?>" class="hero-cta-button hero-cta-action" aria-label="<?php esc_attr_e( '홈페이지 바로가기', 'della-theme' ); ?>">
