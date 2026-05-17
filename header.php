@@ -18,13 +18,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<meta name="format-detection" content="telephone=yes">
 	<link rel="profile" href="https://gmpg.org/xfn/11">
 	<?php
-	if ( ! is_front_page() && ( ! function_exists( 'della_theme_should_run_seo' ) || della_theme_should_run_seo() ) ) {
-		echo '<meta name="robots" content="' . esc_attr( function_exists( 'della_theme_robots_content' ) ? della_theme_robots_content() : 'index,follow,max-image-preview:large' ) . '" />' . "\n";
-		if ( function_exists( 'della_theme_get_canonical_url' ) ) {
-			$della_canonical = della_theme_get_canonical_url();
-			if ( ! empty( $della_canonical ) ) {
-				echo '<link rel="canonical" href="' . esc_url( $della_canonical ) . '" />' . "\n";
-			}
+	if ( function_exists( 'della_theme_should_run_seo' ) && della_theme_should_run_seo() ) {
+		if ( ! is_front_page() ) {
+			echo '<meta name="robots" content="' . esc_attr( function_exists( 'della_theme_robots_content' ) ? della_theme_robots_content() : 'index,follow,max-image-preview:large' ) . '" />' . "\n";
+		}
+		$canonical_url = function_exists( 'della_theme_get_canonical_url' ) ? della_theme_get_canonical_url() : '';
+		if ( $canonical_url ) {
+			echo '<link rel="canonical" href="' . esc_url( $canonical_url ) . '">' . "\n";
 		}
 	}
 	// LCP: 히어로 이미지 preload (상대경로로 출력 — 도메인 변경 시에도 동작)
