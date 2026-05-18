@@ -25,19 +25,38 @@ jobs:
       - name: Build CSS
         run: npm run build:css
 
-      - name: FTP Deploy
+      - name: Deploy to suwon-lawyer.com
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-
           protocol: ftps
           port: 21
-
           local-dir: ./
           server-dir: public_html/wp-content/themes/della-theme/
+          exclude: |
+            **/node_modules/**
+            **/.git/**
+            **/.github/**
+            **/assets/css/src/**
+            **/build-css.php
+            **/split-css.php
+            **/purgecss.config.cjs
+            **/package.json
+            **/package-lock.json
+            **/README.md
 
+      - name: Deploy to korean domain
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.KR_FTP_HOST }}
+          username: ${{ secrets.KR_FTP_USER }}
+          password: ${{ secrets.KR_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./
+          server-dir: public_html/wp-content/themes/della-theme/
           exclude: |
             **/node_modules/**
             **/.git/**
