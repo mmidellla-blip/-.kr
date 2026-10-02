@@ -1745,7 +1745,7 @@ function della_theme_get_site_logo_url() {
 }
 
 /**
- * SEO: JSON-LD 스키마용 전화번호 국제 형식 (+82-1522-3394).
+ * SEO: JSON-LD 스키마용 전화번호 국제 형식 (+82-1844-1087).
  */
 function della_theme_format_telephone_for_schema( $phone ) {
 	if ( ! is_string( $phone ) || trim( $phone ) === '' ) {
@@ -1923,7 +1923,7 @@ function della_theme_front_page_meta_100() {
 	$road2  = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
 	$street = trim( $road . ' ' . $road2 );
 	$postal_code = get_theme_mod( 'della_postal_code', '' );
-	$phone  = get_theme_mod( 'della_phone', '1522-3394' );
+	$phone  = get_theme_mod( 'della_phone', '1844-1087' );
 	$tel_schema = function_exists( 'della_theme_format_telephone_for_schema' ) ? della_theme_format_telephone_for_schema( $phone ) : $phone;
 	$email  = get_theme_mod( 'della_contact_email', 'dongjucriminal@gmail.com' );
 	$logo_url = function_exists( 'della_theme_get_site_logo_url' ) ? della_theme_get_site_logo_url() : '';
@@ -2209,7 +2209,7 @@ function della_theme_customize_register( $wp_customize ) {
 		'type'    => 'text',
 	) );
 	$wp_customize->add_setting( 'della_phone', array(
-		'default'           => '1522-3394',
+		'default'           => '1844-1087',
 		'sanitize_callback' => 'sanitize_text_field',
 	) );
 	$wp_customize->add_control( 'della_phone', array(
@@ -2332,6 +2332,23 @@ function della_theme_scripts() {
 		wp_enqueue_style(
 			'della-google-fonts',
 			'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@400;600;700&display=swap',
+			array(),
+			null
+		);
+	}
+
+	if ( is_front_page() ) {
+		// Figma 모바일 폰트: Noto Sans KR(성공사례 버튼·카드), Poppins(전화번호·번호)
+		wp_enqueue_style(
+			'della-hero-cta-fonts',
+			'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;800&family=Poppins:wght@700;800&display=swap',
+			array(),
+			null
+		);
+		// Figma 모바일 폰트: Pretendard (가변 폰트, 화면에 쓰인 글자 조각만 다운로드)
+		wp_enqueue_style(
+			'della-pretendard',
+			'https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',
 			array(),
 			null
 		);
@@ -2911,12 +2928,14 @@ function della_theme_menu_toggle_script() {
 		if (!btn || !nav) return;
 		function closeMenu() {
 			nav.classList.remove('toggled');
+			document.body.classList.remove('mobile-menu-open');
 			if (btn) {
 				btn.setAttribute('aria-expanded', 'false');
 				btn.setAttribute('aria-label', '<?php echo esc_js( __( 'Open menu', 'della-theme' ) ); ?>');
 			}
 		}
 		function openMenu() {
+			document.body.classList.add('mobile-menu-open');
 			if (btn) {
 				btn.setAttribute('aria-expanded', 'true');
 				btn.setAttribute('aria-label', '<?php echo esc_js( __( 'Close menu', 'della-theme' ) ); ?>');
@@ -3953,7 +3972,7 @@ function della_theme_schema_json_ld() {
 		$road        = get_theme_mod( 'della_road_address', '경기 수원시 영통구 광교중앙로248번길 7-2' );
 		$road2       = get_theme_mod( 'della_road_address2', '원희캐슬광교 B동 902호, 903호' );
 		$street      = trim( $road . ' ' . $road2 );
-		$phone       = get_theme_mod( 'della_phone', '1522-3394' );
+		$phone       = get_theme_mod( 'della_phone', '1844-1087' );
 		$postal_code = get_theme_mod( 'della_postal_code', '' );
 		$logo_id     = get_theme_mod( 'custom_logo', 0 );
 		$logo_url = function_exists( 'della_theme_get_site_logo_url' ) ? della_theme_get_site_logo_url() : '';
